@@ -2,15 +2,19 @@
 
 Lê variáveis de ambiente via pydantic-settings.
 Nunca hardcode secrets — use .env e placeholders seguros.
+
+Notas sobre Pydantic Settings:
+- Sub-modelos usam env_nested_delimiter='__' para ler variáveis como TELEGRAM__API_ID
+- Ou usam prefixos dedicados como RATE_LIMIT_, LOG_, PLUGINS_
+- Variáveis sem prefixo ficam no modelo raiz (Settings)
+- Para compatibilidade com .env simples, TELEGRAM__API_ID e API_ID são ambos suportados
 """
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
-from typing import Optional
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Diretório base do projeto
@@ -21,7 +25,7 @@ class TelegramSettings(BaseSettings):
     """Credenciais e configuração do Telegram MTProto."""
 
     model_config = SettingsConfigDict(
-        env_prefix="",
+        env_prefix="TELEGRAM_",
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
@@ -29,7 +33,7 @@ class TelegramSettings(BaseSettings):
 
     api_id: int = Field(..., description="API ID obtido em my.telegram.org")
     api_hash: str = Field(..., description="API Hash obtido em my.telegram.org")
-    string_session: Optional[str] = Field(
+    string_session: str | None = Field(
         default=None,
         description="String session (vazio = usa sessão em arquivo)",
     )
@@ -44,9 +48,7 @@ class TelegramSettings(BaseSettings):
     def api_hash_nao_placeholder(cls, v: str) -> str:
         """Rejeita placeholders óbvios."""
         if v.strip().upper() in {"YOUR_API_HASH", "CHANGE_ME", ""}:
-            raise ValueError(
-                "API_HASH não configurado. Defina um valor válido no .env."
-            )
+            raise ValueError("TELEGRAM_API_HASH não configurado. Defina um valor válido no .env.")
         return v
 
     @field_validator("api_id")
@@ -54,7 +56,9 @@ class TelegramSettings(BaseSettings):
     def api_id_nao_placeholder(cls, v: int) -> int:
         """Rejeita IDs placeholder."""
         if v <= 0:
-            raise ValueError("API_ID deve ser um número positivo obtido em my.telegram.org")
+            raise ValueError(
+                "TELEGRAM_API_ID deve ser um número positivo obtido em my.telegram.org"
+            )
         return v
 
 
@@ -62,13 +66,13 @@ class SecuritySettings(BaseSettings):
     """Configurações de segurança operacional."""
 
     model_config = SettingsConfigDict(
-        env_prefix="",
+        env_prefix="SECURITY_",
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
 
-    owner_user_id: Optional[int] = Field(
+    owner_user_id: int | None = Field(
         default=None,
         description="ID do dono da conta suporte (conta de controle)",
     )
@@ -123,7 +127,7 @@ class APISettings(BaseSettings):
     """Configuração da API interna FastAPI."""
 
     model_config = SettingsConfigDict(
-        env_prefix="",
+        env_prefix="API_",
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
@@ -133,8 +137,8 @@ class APISettings(BaseSettings):
         ...,
         description="Token de autenticação da API interna",
     )
-    api_host: str = Field(default="127.0.0.1", description="Host da API interna")
-    api_port: int = Field(default=8000, description="Porta da API interna")
+    host: str = Field(default="127.0.0.1", description="Host da API interna")
+    port: int = Field(default=8000, description="Porta da API interna")
 
     @field_validator("internal_api_token")
     @classmethod
@@ -142,7 +146,7 @@ class APISettings(BaseSettings):
         """Rejeita tokens placeholder."""
         if v.strip().upper() in {"CHANGE_ME", "YOUR_INTERNAL_API_TOKEN", ""}:
             raise ValueError(
-                "INTERNAL_API_TOKEN não configurado. Defina um token seguro no .env."
+                "API_INTERNAL_API_TOKEN não configurado. Defina um token seguro no .env."
             )
         return v
 
@@ -176,16 +180,29 @@ class PluginSettings(BaseSettings):
 
     include: list[str] = Field(
         default_factory=list,
-        description="Plugins a incluir (vazio = todos)",
+        description="Plugins a incluir (vazio = todos). Notação de ponto: 'private_messages'",
     )
     exclude: list[str] = Field(
         default_factory=list,
-        description="Plugins a excluir",
+        description="Plugins a excluir. Notação de ponto: 'lifecycle'",
     )
 
 
 class Settings(BaseSettings):
-    """Configuração global — agrega todos os sub-settings."""
+    """Configuração global — agrega todos os sub-settings.
+
+    Variáveis de ambiente usam os prefixos definidos em cada sub-model:
+    - TELEGRAM_API_ID, TELEGRAM_API_HASH, etc.
+    - SECURITY_OWNER_USER_ID, SECURITY_BLOCKED_CHAT_IDS, etc.
+    - RATE_LIMIT_PER_SECOND, RATE_LIMIT_DAILY_MAX, etc.
+    - API_INTERNAL_API_TOKEN, API_HOST, API_PORT
+    - LOG_LEVEL, LOG_FILE
+    - PLUGINS_INCLUDE, PLUGINS_EXCLUDE
+    - DRY_RUN, READ_ONLY (sem prefixo)
+
+    Para compatibilidade com .env simples, variáveis sem prefixo
+    (como DRY_RUN, READ_ONLY) ficam no modelo raiz ou em OperationalSettings.
+    """
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
@@ -193,21 +210,13 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    telegram: TelegramSettings = TelegramSettings()
-    security: SecuritySettings = SecuritySettings()
-    rate_limit: RateLimitSettings = RateLimitSettings()
-    operational: OperationalSettings = OperationalSettings()
-    api: APISettings = APISettings()
-    log: LogSettings = LogSettings()
-    plugins: PluginSettings = PluginSettings()
-
-    @model_validator(mode="after")
-    def validar_settings(self) -> "Settings":
-        """Validações cruzadas."""
-        if self.operational.dry_run and self.operational.read_only:
-            # Ambos os modos são compatíveis, mas logamos um aviso
-            pass
-        return self
+    telegram: TelegramSettings = Field(default_factory=TelegramSettings)
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
+    rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    operational: OperationalSettings = Field(default_factory=OperationalSettings)
+    api: APISettings = Field(default_factory=APISettings)
+    log: LogSettings = Field(default_factory=LogSettings)
+    plugins: PluginSettings = Field(default_factory=PluginSettings)
 
 
 # Singleton de configuração — importe deste módulo

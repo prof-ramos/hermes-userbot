@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from app.agent.schemas import ActionOutcome, ProposedAction
+from app.agent.schemas import ActionOutcome
 from app.bootstrap import get_audit_log, get_rate_limiter
 from app.client import get_client
 from app.config.settings import settings
-from app.types.common import ActionResultStatus
-from app.utils.errors import DryRunBlockedError, ReadOnlyBlockedError, handle_telegram_error
+from app.domains.common import ActionResultStatus
+from app.utils.errors import handle_telegram_error
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -50,7 +48,9 @@ async def send_message(
     # Verifica modo dry-run
     if settings.operational.dry_run:
         logger.info("send_message_dry_run", chat_id=chat_id, text_len=len(text))
-        get_audit_log().log_action("send_message", {"chat_id": chat_id, "dry_run": True}, chat_id=chat_id)
+        get_audit_log().log_action(
+            "send_message", {"chat_id": chat_id, "dry_run": True}, chat_id=chat_id
+        )
         return ActionOutcome(
             action_id=action_id,
             status=ActionResultStatus.DRY_RUN,
@@ -84,7 +84,9 @@ async def send_message(
     except Exception as e:
         error = handle_telegram_error(e)
         logger.error("send_message_error", chat_id=chat_id, error=str(error))
-        get_audit_log().log_action("send_message", {"error": str(error)}, chat_id=chat_id, result="error")
+        get_audit_log().log_action(
+            "send_message", {"error": str(error)}, chat_id=chat_id, result="error"
+        )
         return ActionOutcome(
             action_id=action_id,
             status=ActionResultStatus.ERROR,
@@ -139,7 +141,7 @@ async def forward_message(
 
     try:
         client = get_client()
-        result = await client.forward_messages(
+        await client.forward_messages(
             chat_id=chat_id,
             from_chat_id=from_chat_id,
             message_ids=message_id,

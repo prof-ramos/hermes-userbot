@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from app.utils.logging import get_logger
@@ -10,7 +10,7 @@ from app.utils.logging import get_logger
 logger = get_logger(__name__)
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Códigos de erro padronizados do userbot."""
 
     # Erros de autenticação
@@ -111,6 +111,7 @@ def handle_telegram_error(error: Exception) -> HermesUserbotError:
     # Flood wait
     if "FloodWait" in error_type or "Flood" in error_str:
         import re
+
         match = re.search(r"(\d+)", error_str)
         retry_after = int(match.group(1)) if match else 60
         logger.warning("flood_wait_detected", retry_after=retry_after)

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import Any
+from enum import StrEnum
 
 
-class ActionResultStatus(str, Enum):
+class ActionResultStatus(StrEnum):
     """Status de resultado de uma ação."""
 
     SUCCESS = "success"
@@ -17,7 +16,7 @@ class ActionResultStatus(str, Enum):
     READ_ONLY = "read_only"
 
 
-class ChatType(str, Enum):
+class ChatType(StrEnum):
     """Tipos de chat do Telegram."""
 
     PRIVATE = "private"
@@ -26,7 +25,7 @@ class ChatType(str, Enum):
     CHANNEL = "channel"
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """Tipos de evento processados pelo agente."""
 
     PRIVATE_MESSAGE = "private_message"
@@ -39,7 +38,7 @@ class EventType(str, Enum):
     COMMAND = "command"
 
 
-class ActionIntent(str, Enum):
+class ActionIntent(StrEnum):
     """Intenções de ação do agente."""
 
     REPLY = "reply"

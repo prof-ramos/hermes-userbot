@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from app.agent.schemas import ActionOutcome
 from app.client import get_client
-from app.types.common import ActionResultStatus
+from app.domains.common import ActionResultStatus
 from app.utils.errors import handle_telegram_error
 from app.utils.logging import get_logger
 
@@ -34,7 +34,9 @@ async def get_chat_history(
                 "from_user": {
                     "id": message.from_user.id if message.from_user else None,
                     "name": message.from_user.first_name if message.from_user else None,
-                } if message.from_user else None,
+                }
+                if message.from_user
+                else None,
                 "reply_to_message_id": message.reply_to_message_id,
             }
             messages.append(msg_data)

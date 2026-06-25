@@ -6,16 +6,19 @@ Responde apenas quando a conta suporte é mencionada.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pyrogram import Client, filters  # type: ignore[import-untyped]
-from pyrogram.types import Message  # type: ignore[import-untyped]
 
 from app.agent.decision import get_decision
 from app.agent.schemas import ReceivedEvent
 from app.bootstrap import get_audit_log
-from app.config.settings import settings
+from app.domains.common import ChatType, EventType
 from app.tools.safety import EventDeduplicator, is_allowed_chat, sanitize_text_for_log
-from app.types.common import ChatType, EventType
 from app.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from pyrogram.types import Message
 
 logger = get_logger(__name__)
 
@@ -44,9 +47,12 @@ async def handle_group_message(client: Client, message: Message) -> None:
         if message.text and me.username and f"@{me.username}" in message.text:
             is_mention = True
         # Verifica reply à mensagem do bot
-        if message.reply_to_message and message.reply_to_message.from_user:
-            if message.reply_to_message.from_user.id == me.id:
-                is_mention = True
+        if (
+            message.reply_to_message
+            and message.reply_to_message.from_user
+            and message.reply_to_message.from_user.id == me.id
+        ):
+            is_mention = True
 
     # Se não é menção e não é reply, ignora silenciosamente
     if not is_mention:

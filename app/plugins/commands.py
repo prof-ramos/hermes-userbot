@@ -6,18 +6,24 @@ Apenas o owner (OWNER_USER_ID) pode executar comandos.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pyrogram import Client, filters  # type: ignore[import-untyped]
-from pyrogram.types import Message  # type: ignore[import-untyped]
 
 from app.bootstrap import get_rate_limiter, get_session_manager
 from app.config.settings import settings
 from app.tools.safety import is_owner
 from app.utils.logging import get_logger
 
+if TYPE_CHECKING:
+    from pyrogram.types import Message
+
 logger = get_logger(__name__)
 
 # Filtra: apenas mensagens do owner
-owner_filter = filters.create(lambda _, __, message: is_owner(message.from_user.id if message.from_user else 0))
+owner_filter = filters.create(
+    lambda _, __, message: is_owner(message.from_user.id if message.from_user else 0)
+)
 
 
 @Client.on_message(filters.private & owner_filter & filters.command("status"))  # type: ignore[misc]
@@ -68,7 +74,11 @@ async def cmd_mode(client: Client, message: Message) -> None:
     from app.bootstrap import get_audit_log
 
     if not args:
-        current = "dry_run" if settings.operational.dry_run else ("read_only" if settings.operational.read_only else "normal")
+        current = (
+            "dry_run"
+            if settings.operational.dry_run
+            else ("read_only" if settings.operational.read_only else "normal")
+        )
         await message.reply(f"Modo atual: **{current}**")
         return
 

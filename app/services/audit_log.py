@@ -7,7 +7,7 @@ e violações de política. Nunca registra dados sensíveis.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +45,7 @@ class AuditLog:
     ) -> None:
         """Registra uma ação executada pelo userbot."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "type": "action",
             "action": action,
             "result": result,
@@ -65,7 +65,7 @@ class AuditLog:
     ) -> None:
         """Registra um comando recebido pela API interna."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "type": "command",
             "command": command,
             "source": source,
@@ -84,7 +84,7 @@ class AuditLog:
     ) -> None:
         """Registra uma decisão de política de segurança."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "type": "policy",
             "action": action,
             "policy_result": policy_result,
@@ -103,7 +103,7 @@ class AuditLog:
     ) -> None:
         """Registra uma decisão do agente."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "type": "agent_decision",
             "event_type": event_type,
             "intent": intent,

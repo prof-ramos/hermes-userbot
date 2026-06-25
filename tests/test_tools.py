@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from app.types.common import ActionResultStatus
+from app.domains.common import ActionResultStatus
 
 
 class TestSafetyTools:
@@ -59,7 +57,7 @@ class TestAgentSchemas:
     def test_received_event_creation(self) -> None:
         """ReceivedEvent deve ser criado com valores padrão."""
         from app.agent.schemas import ReceivedEvent
-        from app.types.common import ChatType, EventType
+        from app.domains.common import ChatType, EventType
 
         event = ReceivedEvent(
             event_type=EventType.PRIVATE_MESSAGE,
@@ -74,7 +72,7 @@ class TestAgentSchemas:
     def test_proposed_action_defaults(self) -> None:
         """ProposedAction deve ter valores padrão corretos."""
         from app.agent.schemas import ProposedAction
-        from app.types.common import ActionIntent
+        from app.domains.common import ActionIntent
 
         action = ProposedAction(
             event_id="test",
@@ -103,7 +101,7 @@ class TestSecurityPolicy:
         """Chats bloqueados devem ser rejeitados."""
         from app.agent.policy import SecurityPolicy
         from app.agent.schemas import ReceivedEvent
-        from app.types.common import ChatType, EventType
+        from app.domains.common import ChatType, EventType
 
         policy = SecurityPolicy()
 
@@ -125,7 +123,7 @@ class TestSecurityPolicy:
         """Modo read-only deve bloquear ações de escrita."""
         from app.agent.policy import SecurityPolicy
         from app.agent.schemas import ProposedAction
-        from app.types.common import ActionIntent
+        from app.domains.common import ActionIntent
 
         policy = SecurityPolicy()
 
@@ -146,7 +144,7 @@ class TestSecurityPolicy:
         """Modo dry-run deve bloquear execução de escrita."""
         from app.agent.policy import SecurityPolicy
         from app.agent.schemas import ProposedAction
-        from app.types.common import ActionIntent
+        from app.domains.common import ActionIntent
 
         policy = SecurityPolicy()
 
@@ -167,7 +165,7 @@ class TestSecurityPolicy:
         """Ações sensíveis devem exigir aprovação."""
         from app.agent.policy import SecurityPolicy
         from app.agent.schemas import ProposedAction
-        from app.types.common import ActionIntent
+        from app.domains.common import ActionIntent
 
         policy = SecurityPolicy()
 

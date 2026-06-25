@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -25,7 +25,7 @@ class Command:
     action: str = ""
     params: dict[str, Any] = field(default_factory=dict)
     source: str = "api"
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     priority: int = 0  # 0 = normal, >0 = alta, <0 = baixa
 
     @property
@@ -45,11 +45,12 @@ class CommandQueue:
     async def enqueue(self, command: Command) -> bool:
         """Adiciona um comando à fila. Rejeita duplicatas por ID."""
         if command.id in self._seen_ids:
-            logger.warning("command_duplicate_rejected", command_id=command.id, action=command.action)
+            logger.warning(
+                "command_duplicate_rejected", command_id=command.id, action=command.action
+            )
             return False
 
         # Prioridade invertida (maior número = menor prioridade no heapq)
-        priority_tuple = (-command.priority, command.created_at, command.id)
 
         try:
             # Cria um item compatível com PriorityQueue
@@ -73,7 +74,7 @@ class CommandQueue:
             command = await asyncio.wait_for(self._queue.get(), timeout=timeout)
             logger.info("command_dequeued", command_id=command.id, action=command.action)
             return command
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     @property

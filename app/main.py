@@ -1,11 +1,13 @@
 """Ponto de entrada principal do hermes-userbot.
 
 Inicia o cliente MTProto e a API interna de controle.
+Usa asyncio.run() com encerramento gracioso via sinais.
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import signal
 import sys
 
@@ -38,12 +40,12 @@ async def main() -> None:
 
     api_task = asyncio.create_task(
         create_api_server(
-            host=settings.api.api_host,
-            port=settings.api.api_port,
+            host=settings.api.host,
+            port=settings.api.port,
         )
     )
 
-    logger.info("main_api_started", host=settings.api.api_host, port=settings.api.api_port)
+    logger.info("main_api_started", host=settings.api.host, port=settings.api.port)
 
     # Mantém rodando até receber sinal de encerramento
     stop_event = asyncio.Event()
@@ -60,10 +62,13 @@ async def main() -> None:
             # Windows não suporta add_signal_handler no loop
             signal.signal(sig, _signal_handler)
 
-    logger.info("main_running", modes={
-        "dry_run": settings.operational.dry_run,
-        "read_only": settings.operational.read_only,
-    })
+    logger.info(
+        "main_running",
+        modes={
+            "dry_run": settings.operational.dry_run,
+            "read_only": settings.operational.read_only,
+        },
+    )
 
     try:
         await stop_event.wait()
@@ -72,19 +77,15 @@ async def main() -> None:
     finally:
         logger.info("main_shutting_down")
         api_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await api_task
-        except asyncio.CancelledError:
-            pass
         await shutdown()
 
 
 def run() -> None:
     """Entry point para execução via python -m app.main."""
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":

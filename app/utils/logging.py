@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -15,20 +16,21 @@ import structlog
 
 from app.config.settings import settings
 
-
 # Campos sensíveis que devem ser mascarados em logs
-SENSITIVE_KEYS = frozenset({
-    "api_hash",
-    "api_id",
-    "string_session",
-    "phone_number",
-    "two_fa_password",
-    "internal_api_token",
-    "password",
-    "token",
-    "secret",
-    "authorization",
-})
+SENSITIVE_KEYS = frozenset(
+    {
+        "api_hash",
+        "api_id",
+        "string_session",
+        "phone_number",
+        "two_fa_password",
+        "internal_api_token",
+        "password",
+        "token",
+        "secret",
+        "authorization",
+    }
+)
 
 
 def _mask_sensitive(logger: Any, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
@@ -45,9 +47,9 @@ def _mask_sensitive(logger: Any, method_name: str, event_dict: dict[str, Any]) -
 
 def _add_timestamp(logger: Any, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
     """Adiciona timestamp ISO formatado."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    event_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
+    event_dict["timestamp"] = datetime.now(UTC).isoformat()
     return event_dict
 
 

@@ -69,8 +69,11 @@ class RateLimiter:
     def _check_daily_reset(self) -> None:
         """Reseta contador diário se mudou de dia."""
         import datetime
+
         today = datetime.date.today().toordinal()
-        if today != self._daily_reset_day:
+        if self._daily_reset_day == 0:
+            self._daily_reset_day = today
+        elif today != self._daily_reset_day:
             self._daily_count = 0
             self._daily_reset_day = today
 
@@ -79,7 +82,7 @@ class RateLimiter:
 
         Retorna (pode_proceder, motivo_se_bloqueado).
         """
-        now = self._now()
+        self._now()
 
         # Verifica reset diário
         self._check_daily_reset()
@@ -104,7 +107,11 @@ class RateLimiter:
         if chat_id is not None:
             chat_bucket = self._prune(self._chat_buckets.get(chat_id, []), 60.0)
             if len(chat_bucket) >= self.per_chat_minute:
-                return False, f"Limite por chat/minuto atingido ({self.per_chat_minute}/min para chat {chat_id})"
+                return (
+                    False,
+                    f"Limite por chat/minuto atingido "
+                    f"({self.per_chat_minute}/min para chat {chat_id})",
+                )
 
         return True, ""
 

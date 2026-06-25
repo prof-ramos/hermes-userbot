@@ -6,7 +6,7 @@ from app.agent.schemas import ActionOutcome
 from app.bootstrap import get_audit_log, get_rate_limiter
 from app.client import get_client
 from app.config.settings import settings
-from app.types.common import ActionResultStatus
+from app.domains.common import ActionResultStatus
 from app.utils.errors import handle_telegram_error
 from app.utils.logging import get_logger
 

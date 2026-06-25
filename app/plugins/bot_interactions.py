@@ -6,16 +6,19 @@ Processa respostas de bots e permite interação controlada.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pyrogram import Client, filters  # type: ignore[import-untyped]
-from pyrogram.types import Message  # type: ignore[import-untyped]
 
 from app.agent.decision import get_decision
 from app.agent.schemas import ReceivedEvent
 from app.bootstrap import get_audit_log
-from app.config.settings import settings
+from app.domains.common import ChatType, EventType
 from app.tools.safety import EventDeduplicator, is_allowed_chat, sanitize_text_for_log
-from app.types.common import ChatType, EventType
 from app.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from pyrogram.types import Message
 
 logger = get_logger(__name__)
 

@@ -31,10 +31,12 @@ def main() -> None:
 
     # Importa e roda
     from dotenv import load_dotenv
+
     load_dotenv(str(env_path))
 
     # Força modo dry-run em dev se solicitado
     import os
+
     if os.getenv("DEV_DRY_RUN", "true").lower() == "true":
         os.environ.setdefault("DRY_RUN", "true")
         print("⚠️  MODO DRY-RUN ATIVO — nenhuma ação será executada")
@@ -47,6 +49,7 @@ def main() -> None:
     print()
 
     from app.main import run
+
     run()
 
 

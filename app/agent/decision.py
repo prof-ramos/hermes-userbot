@@ -9,13 +9,12 @@ from __future__ import annotations
 from app.agent.policy import SecurityPolicy
 from app.agent.router import EventRouter
 from app.agent.schemas import (
-    ActionOutcome,
     ApprovalRequest,
     DetectedIntent,
     ProposedAction,
     ReceivedEvent,
 )
-from app.types.common import ActionIntent, ActionResultStatus
+from app.domains.common import ActionIntent
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

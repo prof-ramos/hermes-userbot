@@ -9,6 +9,7 @@ NUNCA commit a string session no Git.
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -83,19 +84,16 @@ def main() -> None:
         sys.exit(1)
 
     finally:
-        try:
+        with contextlib.suppress(Exception):
             client.stop()
-        except Exception:
-            pass
 
         # Remove a sessão temporária
         import os
+
         for ext in ["", "-journal"]:
             path = f"{session_path}.session{ext}"
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 os.remove(path)
-            except FileNotFoundError:
-                pass
 
 
 if __name__ == "__main__":

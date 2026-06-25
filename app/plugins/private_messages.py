@@ -6,17 +6,20 @@ Normaliza o evento, passa pelo router do agente e executa a ação.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pyrogram import Client, filters  # type: ignore[import-untyped]
-from pyrogram.types import Message  # type: ignore[import-untyped]
 
 from app.agent.decision import get_decision
 from app.agent.schemas import ReceivedEvent
 from app.bootstrap import get_audit_log
-from app.config.settings import settings
+from app.domains.common import ChatType, EventType
 from app.tools.messaging import reply
 from app.tools.safety import EventDeduplicator, is_allowed_chat, is_owner, sanitize_text_for_log
-from app.types.common import ChatType, EventType
 from app.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from pyrogram.types import Message
 
 logger = get_logger(__name__)
 
@@ -84,15 +87,19 @@ async def handle_private_message(client: Client, message: Message) -> None:
 
     # Se é uma ProposedAction, executa
     from app.agent.schemas import ProposedAction
-    if isinstance(result, ProposedAction):
-        if result.intent.value == "reply" and result.target_chat_id:
-            # MVP: resposta automática simples
-            # Em versões futuras, a resposta vem do LLM
-            if is_owner(user_id):
-                # Owner recebe confirmação de recebimento
-                await reply(
-                    chat_id=chat_id,
-                    message_id=message.id,
-                    text="Mensagem recebida. Processando...",
-                )
-            logger.info("private_message_action_reply", chat_id=chat_id, user_id=user_id)
+
+    if (
+        isinstance(result, ProposedAction)
+        and result.intent.value == "reply"
+        and result.target_chat_id
+    ):
+        # MVP: resposta automática simples
+        # Em versões futuras, a resposta vem do LLM
+        if is_owner(user_id):
+            # Owner recebe confirmação de recebimento
+            await reply(
+                chat_id=chat_id,
+                message_id=message.id,
+                text="Mensagem recebida. Processando...",
+            )
+        logger.info("private_message_action_reply", chat_id=chat_id, user_id=user_id)

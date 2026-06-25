@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from app.agent.schemas import DetectedIntent, ReceivedEvent
 from app.config.settings import settings
-from app.types.common import ActionIntent, EventType
+from app.domains.common import ActionIntent, EventType
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)

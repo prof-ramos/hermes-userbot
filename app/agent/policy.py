@@ -6,10 +6,14 @@ e regras de proteção contra loops e abuso.
 
 from __future__ import annotations
 
-from app.agent.schemas import DetectedIntent, ProposedAction, ReceivedEvent
+from typing import TYPE_CHECKING
+
 from app.config.settings import settings
-from app.types.common import ActionIntent, ChatType, EventType
+from app.domains.common import ActionIntent, EventType
 from app.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from app.agent.schemas import ProposedAction, ReceivedEvent
 
 logger = get_logger(__name__)
 
@@ -58,11 +62,11 @@ class SecurityPolicy:
             return False, reason
 
         # Verifica lista de permissão (se configurada)
-        if settings.security.allowed_chat_ids:
-            if event.chat_id not in settings.security.allowed_chat_ids:
-                reason = f"Chat {event.chat_id} não está na lista de permissão"
-                logger.info("policy_event_not_allowed_chat", chat_id=event.chat_id, reason=reason)
-                return False, reason
+        allowed = settings.security.allowed_chat_ids
+        if allowed and event.chat_id not in allowed:
+            reason = f"Chat {event.chat_id} não está na lista de permissão"
+            logger.info("policy_event_not_allowed_chat", chat_id=event.chat_id, reason=reason)
+            return False, reason
 
         # Proteção contra resposta a bots (exceto interação explícita com bots)
         if event.is_bot and event.event_type not in {EventType.BOT_MESSAGE, EventType.COMMAND}:
@@ -96,11 +100,11 @@ class SecurityPolicy:
             return False, reason, False
 
         # Verifica lista de permissão
-        if target_chat and settings.security.allowed_chat_ids:
-            if target_chat not in settings.security.allowed_chat_ids:
-                reason = f"Chat alvo {target_chat} não está na lista de permissão"
-                logger.info("policy_action_not_allowed_chat", chat_id=target_chat)
-                return False, reason, False
+        allowed = settings.security.allowed_chat_ids
+        if target_chat and allowed and target_chat not in allowed:
+            reason = f"Chat alvo {target_chat} não está na lista de permissão"
+            logger.info("policy_action_not_allowed_chat", chat_id=target_chat)
+            return False, reason, False
 
         # Ações sensíveis exigem aprovação
         if action.intent in self.SENSITIVE_ACTIONS:
@@ -110,7 +114,9 @@ class SecurityPolicy:
 
         return True, "", False
 
-    def check_bot_loop(self, event: ReceivedEvent, last_bot_response_chat: int | None = None) -> bool:
+    def check_bot_loop(
+        self, event: ReceivedEvent, last_bot_response_chat: int | None = None
+    ) -> bool:
         """Verifica se uma resposta a um bot pode criar um loop infinito.
 
         Retorna True se houver risco de loop (ação deve ser bloqueada).

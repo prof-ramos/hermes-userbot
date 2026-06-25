@@ -13,7 +13,9 @@ class SendMessageRequest(BaseModel):
     chat_id: int = Field(..., description="ID do chat de destino")
     text: str = Field(..., max_length=4096, description="Texto da mensagem")
     parse_mode: str | None = Field(default=None, description="Modo de parsing (Markdown, HTML)")
-    reply_to_message_id: int | None = Field(default=None, description="ID da mensagem para responder")
+    reply_to_message_id: int | None = Field(
+        default=None, description="ID da mensagem para responder"
+    )
 
 
 class SendMessageResponse(BaseModel):

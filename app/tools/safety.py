@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import time
 from collections import OrderedDict
-from typing import Any
 
 from app.config.settings import settings
 from app.utils.logging import get_logger
@@ -57,10 +56,9 @@ def is_allowed_chat(chat_id: int) -> bool:
         logger.info("chat_blocked", chat_id=chat_id)
         return False
 
-    if settings.security.allowed_chat_ids:
-        if chat_id not in settings.security.allowed_chat_ids:
-            logger.info("chat_not_in_allowlist", chat_id=chat_id)
-            return False
+    if settings.security.allowed_chat_ids and chat_id not in settings.security.allowed_chat_ids:
+        logger.info("chat_not_in_allowlist", chat_id=chat_id)
+        return False
 
     return True
 

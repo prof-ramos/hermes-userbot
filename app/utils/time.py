@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Awaitable, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from app.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
 
 logger = get_logger(__name__)
 
@@ -47,14 +50,14 @@ async def backoff_retry(
             last_error = e
         except HermesUserbotError as e:
             if e.code in {"rate_limited", "network_error"}:
-                delay = min(base_delay * (2 ** attempt), max_delay)
+                delay = min(base_delay * (2**attempt), max_delay)
                 logger.warning("backoff_retry", attempt=attempt, delay=delay, error=e.code)
                 await asyncio.sleep(delay)
                 last_error = e
             else:
                 raise
         except Exception as e:
-            delay = min(base_delay * (2 ** attempt), max_delay)
+            delay = min(base_delay * (2**attempt), max_delay)
             logger.warning("backoff_retry_unknown", attempt=attempt, delay=delay, error=str(e))
             await asyncio.sleep(delay)
             last_error = e

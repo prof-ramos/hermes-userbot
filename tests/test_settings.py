@@ -16,37 +16,50 @@ class TestTelegramSettings:
         """API IDs inválidos devem ser rejeitados."""
         from app.config.settings import TelegramSettings
 
-        with patch.dict(os.environ, {
-            "API_ID": "-1",
-            "API_HASH": "abc123def456",
-            "PHONE_NUMBER": "+5511999999999",
-        }):
-            with pytest.raises(ValidationError):
-                TelegramSettings()
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "TELEGRAM_API_ID": "-1",
+                    "TELEGRAM_API_HASH": "abc123def456",
+                    "TELEGRAM_PHONE_NUMBER": "+551****9999",
+                },
+            ),
+            pytest.raises(ValidationError),
+        ):
+            TelegramSettings()
 
     def test_api_hash_placeholder_rejected(self) -> None:
         """API Hash placeholder deve ser rejeitado."""
         from app.config.settings import TelegramSettings
 
-        with patch.dict(os.environ, {
-            "API_ID": "12345",
-            "API_HASH": "YOUR_API_HASH",
-            "PHONE_NUMBER": "+5511999999999",
-        }):
-            with pytest.raises(ValidationError):
-                TelegramSettings()
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "TELEGRAM_API_ID": "12345",
+                    "TELEGRAM_API_HASH": "YOUR_API_HASH",
+                    "TELEGRAM_PHONE_NUMBER": "+551****9999",
+                },
+            ),
+            pytest.raises(ValidationError),
+        ):
+            TelegramSettings()
 
     def test_valid_settings_load(self) -> None:
         """Settings válidas devem carregar corretamente."""
         from app.config.settings import TelegramSettings
 
-        with patch.dict(os.environ, {
-            "API_ID": "12345",
-            "API_HASH": "abc123def456ghi789",
-            "PHONE_NUMBER": "+5511999999999",
-            "TWO_FA_PASSWORD": "",
-            "STRING_SESSION": "",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "TELEGRAM_API_ID": "12345",
+                "TELEGRAM_API_HASH": "abc123def456ghi789",
+                "TELEGRAM_PHONE_NUMBER": "+551****9999",
+                "TELEGRAM_TWO_FA_PASSWORD": "",
+                "TELEGRAM_STRING_SESSION": "",
+            },
+        ):
             ts = TelegramSettings()
             assert ts.api_id == 12345
             assert ts.api_hash == "abc123def456ghi789"
@@ -59,19 +72,27 @@ class TestAPISettings:
         """Tokens placeholder devem ser rejeitados."""
         from app.config.settings import APISettings
 
-        with patch.dict(os.environ, {
-            "INTERNAL_API_TOKEN": "CHANGE_ME",
-        }):
-            with pytest.raises(ValidationError):
-                APISettings()
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "API_INTERNAL_API_TOKEN": "CHANGE_ME",
+                },
+            ),
+            pytest.raises(ValidationError),
+        ):
+            APISettings()
 
     def test_valid_api_token(self) -> None:
         """Token válido deve ser aceito."""
         from app.config.settings import APISettings
 
-        with patch.dict(os.environ, {
-            "INTERNAL_API_TOKEN": "my_secure_token_12345",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "API_INTERNAL_API_TOKEN": "my_secure_token_12345",
+            },
+        ):
             api = APISettings()
             assert api.internal_api_token == "my_secure_token_12345"
 
@@ -93,8 +114,10 @@ class TestOperationalSettings:
     """Testes para modos operacionais."""
 
     def test_defaults(self) -> None:
-        """Modos padrão devem ser seguros (dry-run ativo)."""
+        """Modos padrão devem ser seguros (dry-run desativado por padrão)."""
         from app.config.settings import OperationalSettings
 
         ops = OperationalSettings()
-        assert ops.dry_run is True or ops.dry_run is False  # depende do .env
+        # Padrão depende do .env — não testamos valor fixo
+        assert isinstance(ops.dry_run, bool)
+        assert isinstance(ops.read_only, bool)

@@ -7,7 +7,6 @@ Autenticação via token interno no header X-Internal-Token.
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -25,8 +24,7 @@ from app.api.schemas import (
 from app.bootstrap import get_rate_limiter
 from app.config.settings import settings
 from app.tools.bots import interact_with_bot, send_bot_command
-from app.tools.chats import get_chat_info, join_chat, leave_chat
-from app.tools.history import get_chat_history
+from app.tools.chats import join_chat, leave_chat
 from app.tools.messaging import reply, send_message
 from app.utils.logging import get_logger
 
